@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "outDir": "dist",
+    "target": "esnext",
+    "module": "esnext",
+    "lib": ["ESNext", "DOM"],
+    "strict": true,
+    "noEmit": true,
+    "moduleResolution": "bundler",
+    "jsx": "preserve"
+  },
+  "include": ["src"],
+  "exclude": ["node_modules"]
+}
