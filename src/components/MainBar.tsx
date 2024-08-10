@@ -5,7 +5,7 @@ import FilterOptions from './FilterOptions';
 import SortOptions from './SortOptions';
 import TaskForm from './TaskForm';
 
-const MainBar = () => {
+const MainBar: React.FC = () => {
   const [taskFormShow, setTaskFormShow] = useState(false);
 
   const toggleTaskForm = () => setTaskFormShow(!taskFormShow);
