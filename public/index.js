@@ -26218,54 +26218,6 @@ Take a look at the reducer(s) handling this action type: ${action.type}.
     }
   });
 
-  // src/store/utils/updateClientTasks.ts
-  var updateClientTasks, updateClientTasks_default;
-  var init_updateClientTasks = __esm({
-    "src/store/utils/updateClientTasks.ts"() {
-      "use strict";
-      updateClientTasks = ({
-        type,
-        state,
-        payload = {}
-      }) => {
-        let clientTasks = [...state.allTasks];
-        switch (type) {
-          case "search":
-            if (payload.search) {
-              clientTasks = clientTasks.filter(
-                (task) => task.title.toLowerCase().includes(payload.search) || task.tags.includes(payload.search)
-              );
-            }
-            break;
-          case "sort":
-            if (payload.by && payload.direction) {
-              const dateKey = payload.by === "creationDate" ? "creationDate" : "dueDate";
-              clientTasks.sort(
-                (a, b) => payload.direction === "asc" ? parseInt(a[dateKey]) - parseInt(b[dateKey]) : parseInt(b[dateKey]) - parseInt(a[dateKey])
-              );
-            }
-            break;
-          case "filter":
-            if (payload.status && payload.status !== "all") {
-              clientTasks = clientTasks.filter(
-                (task) => payload.status === "completed" ? task.completed : !task.completed
-              );
-            }
-            if (payload.priority) {
-              clientTasks = clientTasks.filter(
-                (task) => task.priority === payload.priority
-              );
-            }
-            break;
-          default:
-            break;
-        }
-        return clientTasks;
-      };
-      updateClientTasks_default = updateClientTasks;
-    }
-  });
-
   // src/store/slices/taskManagement/taskManagementSlice.ts
   var fromJSON, TaskManagementSlice, taskManagementSlice_default;
   var init_taskManagementSlice = __esm({
@@ -26273,67 +26225,99 @@ Take a look at the reducer(s) handling this action type: ${action.type}.
       "use strict";
       init_redux_toolkit_modern();
       init_initialState();
-      init_updateClientTasks();
       fromJSON = (payload) => JSON.parse(payload);
       TaskManagementSlice = createSlice({
         name: "TaskManagement",
         initialState: initialState_default,
         reducers: {
-          setTasks: (state, actions) => {
-            const tasks = fromJSON(actions.payload);
+          setTasks: (state, action) => {
+            const tasks = fromJSON(action.payload);
             state.allTasks = tasks;
             state.userTasks = tasks;
           },
-          addTask: (state, actions) => {
-            const taskToAdd = fromJSON(actions.payload);
+          addTask: (state, action) => {
+            const taskToAdd = fromJSON(action.payload);
             taskToAdd.dueDate = taskToAdd.dueDate ? new Date(taskToAdd.dueDate).getTime().toString() : "";
             state.allTasks.push(taskToAdd);
-            state.userTasks = updateClientTasks_default({ type: "add", state });
+            state.userTasks.push(taskToAdd);
           },
-          deleteTask: (state, actions) => {
-            const taskToDelete = fromJSON(actions.payload);
+          deleteTask: (state, action) => {
+            const taskToDelete = fromJSON(action.payload);
             state.allTasks = state.allTasks.filter(
               (task) => task.id !== taskToDelete.id
             );
-            state.userTasks = updateClientTasks_default({ type: "delete", state });
+            state.userTasks = state.userTasks.filter(
+              (task) => task.id !== taskToDelete.id
+            );
           },
-          editTask: (state, actions) => {
-            const dataToEdit = fromJSON(actions.payload);
+          editTask: (state, action) => {
+            const dataToEdit = fromJSON(action.payload);
             const taskToEdit = state.allTasks.find(
               (task) => task.id === dataToEdit.id
             );
-            if (taskToEdit) Object.assign(taskToEdit, dataToEdit);
-            state.userTasks = updateClientTasks_default({ type: "edit", state });
+            if (taskToEdit) {
+              const index = state.allTasks.indexOf(taskToEdit);
+              state.allTasks[index] = { ...taskToEdit, ...dataToEdit };
+              state.userTasks[index] = { ...taskToEdit, ...dataToEdit };
+            }
           },
-          toggleTask: (state, actions) => {
-            const taskToToggle = fromJSON(actions.payload);
-            const task = state.allTasks.find((task2) => task2.id === taskToToggle.id);
-            if (task) task.completed = !task.completed;
-            state.userTasks = updateClientTasks_default({ type: "toggle", state });
+          toggleTask: (state, action) => {
+            const taskToToggle = fromJSON(action.payload);
+            const taskFromAll = state.allTasks.find(
+              (task) => task.id === taskToToggle.id
+            );
+            if (taskFromAll) taskFromAll.completed = !taskFromAll.completed;
+            const taskFromUser = state.userTasks.find(
+              (task) => task.id === taskToToggle.id
+            );
+            if (taskFromUser) taskFromUser.completed = !taskFromUser.completed;
           },
-          searchTasks: (state, actions) => {
-            const search = actions.payload.search.toLocaleLowerCase();
-            state.userTasks = updateClientTasks_default({
-              type: "search",
-              state,
-              payload: { search }
+          searchTasks: (state, action) => {
+            const search = action.payload.search.toLowerCase();
+            state.userTasks = state.allTasks.filter(
+              (task) => task.title.toLowerCase().includes(search) || task.tags.some((tag) => tag.toLowerCase().includes(search))
+            );
+          },
+          sortTasks: (state, action) => {
+            const { by, direction } = action.payload;
+            state.userTasks = state.userTasks.sort((a, b) => {
+              const aValue = parseInt(a[by]) || 0;
+              const bValue = parseInt(b[by]) || 0;
+              return direction === "asc" ? aValue - bValue : bValue - aValue;
             });
           },
-          sortTasks: (state, actions) => {
-            const { by, direction } = actions.payload;
-            state.userTasks = updateClientTasks_default({
-              type: "sort",
-              state,
-              payload: { by, direction }
-            });
-          },
-          filterTasks: (state, actions) => {
-            const { status, priority } = actions.payload;
-            state.userTasks = updateClientTasks_default({
-              type: "filter",
-              state,
-              payload: { status, priority }
-            });
+          filterTasks: (state, action) => {
+            const { status, priority } = action.payload;
+            if (status) {
+              if (status === "all") {
+                state.userTasks = state.allTasks;
+              }
+              if (status === "completed") {
+                state.userTasks = state.allTasks.filter((task) => {
+                  return task.completed === true;
+                });
+              }
+              if (status === "incomplete") {
+                state.userTasks = state.allTasks.filter((task) => {
+                  return task.completed === false;
+                });
+              }
+            }
+            if (priority) {
+              if (priority === "all") {
+                state.userTasks = state.allTasks;
+              }
+              if (priority === "high") {
+                state.userTasks = state.allTasks.filter((task) => {
+                  return task.priority === "high";
+                });
+              }
+              if (priority === "low") {
+                state.userTasks = state.allTasks.filter((task) => {
+                  return task.priority === "low";
+                });
+              }
+            }
           }
         }
       });
@@ -26376,7 +26360,7 @@ Take a look at the reducer(s) handling this action type: ${action.type}.
         },
         filter: {
           status: "all",
-          priority: "normal"
+          priority: "all"
         }
       };
       initialState_default2 = initialState2;
@@ -36878,8 +36862,7 @@ Take a look at the reducer(s) handling this action type: ${action.type}.
               dispatch(setFilter2({ status: "all" }));
               dispatch(
                 filterTasks({
-                  status: "all",
-                  priority: filter2.priority
+                  status: "all"
                 })
               );
             }
@@ -36894,8 +36877,7 @@ Take a look at the reducer(s) handling this action type: ${action.type}.
               dispatch(setFilter2({ status: "completed" }));
               dispatch(
                 filterTasks({
-                  status: "completed",
-                  priority: filter2.priority
+                  status: "completed"
                 })
               );
             }
@@ -36910,8 +36892,7 @@ Take a look at the reducer(s) handling this action type: ${action.type}.
               dispatch(setFilter2({ status: "incomplete" }));
               dispatch(
                 filterTasks({
-                  status: "incomplete",
-                  priority: filter2.priority
+                  status: "incomplete"
                 })
               );
             }
@@ -36920,19 +36901,18 @@ Take a look at the reducer(s) handling this action type: ${action.type}.
         )))), /* @__PURE__ */ import_react68.default.createElement(ButtonGroup_default, { className: "mx-1" }, /* @__PURE__ */ import_react68.default.createElement(Dropdown_default2, null, /* @__PURE__ */ import_react68.default.createElement(Dropdown_default2.Toggle, { variant: "secondary" }, "Priority"), /* @__PURE__ */ import_react68.default.createElement(Dropdown_default2.Menu, null, /* @__PURE__ */ import_react68.default.createElement(
           Dropdown_default2.Item,
           {
-            active: filter2.priority === "normal",
+            active: filter2.priority === "all",
             onClick: (e) => {
               e.preventDefault();
-              dispatch(setFilter2({ priority: "normal" }));
+              dispatch(setFilter2({ priority: "all" }));
               dispatch(
                 filterTasks({
-                  status: filter2.status,
-                  priority: "normal"
+                  priority: "all"
                 })
               );
             }
           },
-          "Normal"
+          "All"
         ), /* @__PURE__ */ import_react68.default.createElement(
           Dropdown_default2.Item,
           {
@@ -36942,7 +36922,6 @@ Take a look at the reducer(s) handling this action type: ${action.type}.
               dispatch(setFilter2({ priority: "high" }));
               dispatch(
                 filterTasks({
-                  status: filter2.status,
                   priority: "high"
                 })
               );
@@ -36958,7 +36937,6 @@ Take a look at the reducer(s) handling this action type: ${action.type}.
               dispatch(setFilter2({ priority: "low" }));
               dispatch(
                 filterTasks({
-                  status: filter2.status,
                   priority: "low"
                 })
               );
@@ -36984,23 +36962,6 @@ Take a look at the reducer(s) handling this action type: ${action.type}.
       SortOptions = () => {
         const [sort, dispatch] = useReduxState_default((state) => state.globals.sort);
         return /* @__PURE__ */ import_react69.default.createElement(ButtonToolbar_default, null, /* @__PURE__ */ import_react69.default.createElement(ButtonGroup_default, { className: "mx-1" }, /* @__PURE__ */ import_react69.default.createElement(Dropdown_default2, null, /* @__PURE__ */ import_react69.default.createElement(Dropdown_default2.Toggle, { variant: "secondary" }, "Sort By"), /* @__PURE__ */ import_react69.default.createElement(Dropdown_default2.Menu, null, /* @__PURE__ */ import_react69.default.createElement(
-          Dropdown_default2.Item,
-          {
-            active: sort.by === "noSort",
-            onClick: (e) => {
-              e.preventDefault();
-              dispatch(
-                setSort2({
-                  by: "noSort"
-                })
-              );
-              dispatch(
-                sortTasks({ by: "noSort", direction: sort.direction })
-              );
-            }
-          },
-          "No Sort"
-        ), /* @__PURE__ */ import_react69.default.createElement(
           Dropdown_default2.Item,
           {
             active: sort.by === "dueDate",
@@ -39969,7 +39930,7 @@ Take a look at the reducer(s) handling this action type: ${action.type}.
         completed;
         tags;
         constructor(taskProperties) {
-          this.id = Math.random().toString().slice(2, 4);
+          this.id = taskProperties.id ? taskProperties.id : Math.random().toString().slice(2, 4);
           this.creationDate = (/* @__PURE__ */ new Date()).getDate().toString();
           this.title = taskProperties.title ?? "";
           this.description = taskProperties.description ?? "";
@@ -40428,13 +40389,20 @@ Take a look at the reducer(s) handling this action type: ${action.type}.
         (0, import_react74.useEffect)(() => {
           (async function fetchData() {
             axios_default.get("https://jsonplaceholder.typicode.com/todos").then((response) => {
-              let tasks = response.data.slice(0, 10);
-              tasks = tasks.map((task) => {
-                return new Task(task);
+              const fetchedTasks = response.data.slice(0, 10).map((task) => new Task(task));
+              let storedTasks = [];
+              const storedTasksString = localStorage.getItem("tasks");
+              if (storedTasksString) storedTasks = JSON.parse(storedTasksString);
+              const newTasks = fetchedTasks.filter((fetchedTask) => {
+                return !storedTasks.some((storedTask) => {
+                  return fetchedTask.id === storedTask.id;
+                });
               });
-              const tasksString = JSON.stringify(tasks);
-              localStorage.setItem("tasks", tasksString);
-              dispatch(setTasks(tasksString));
+              const updatedTasks = [...storedTasks, ...newTasks];
+              const updatedTasksString = JSON.stringify(updatedTasks);
+              localStorage.setItem("tasks", updatedTasksString);
+              dispatch(setTasks(updatedTasksString));
+              dispatch(setSuccess2("Tasks loaded successfully"));
             }).catch((error) => {
               dispatch(setError2(error.message));
             });
