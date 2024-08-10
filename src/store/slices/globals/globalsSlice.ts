@@ -1,5 +1,4 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import Globals from '../../../types/Globals';
 import initialState from './initialState';
 
 const globalsSlice = createSlice({
@@ -30,7 +29,7 @@ const globalsSlice = createSlice({
       state,
       action: PayloadAction<{
         status?: 'all' | 'completed' | 'incomplete';
-        priority?: 'normal' | 'high' | 'low';
+        priority?: 'all' | 'high' | 'low';
       }>,
     ) => {
       state.filter = { ...state.filter, ...action.payload };
