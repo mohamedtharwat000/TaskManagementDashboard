@@ -5,7 +5,7 @@ export interface SortOptions {
 
 export interface FilterOptions {
   status: 'all' | 'completed' | 'incomplete';
-  priority: 'normal' | 'high' | 'low';
+  priority: 'all' | 'high' | 'low';
 }
 
 export default interface Globals {
