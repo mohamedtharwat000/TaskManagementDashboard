@@ -9,7 +9,9 @@ export default class Task {
   public tags: string[];
 
   constructor(taskProperties: Partial<Task>) {
-    this.id = Math.random().toString().slice(2, 4);
+    this.id = taskProperties.id
+      ? taskProperties.id
+      : Math.random().toString().slice(2, 4);
     this.creationDate = new Date().getDate().toString();
     this.title = taskProperties.title ?? '';
     this.description = taskProperties.description ?? '';
