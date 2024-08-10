@@ -21,7 +21,6 @@ const FilterOptions: React.FC = () => {
                 dispatch(
                   filterTasks({
                     status: 'all',
-                    priority: filter.priority,
                   }),
                 );
               }}
@@ -36,7 +35,6 @@ const FilterOptions: React.FC = () => {
                 dispatch(
                   filterTasks({
                     status: 'completed',
-                    priority: filter.priority,
                   }),
                 );
               }}
@@ -51,7 +49,6 @@ const FilterOptions: React.FC = () => {
                 dispatch(
                   filterTasks({
                     status: 'incomplete',
-                    priority: filter.priority,
                   }),
                 );
               }}
@@ -67,19 +64,18 @@ const FilterOptions: React.FC = () => {
           <Dropdown.Toggle variant="secondary">Priority</Dropdown.Toggle>
           <Dropdown.Menu>
             <Dropdown.Item
-              active={filter.priority === 'normal'}
+              active={filter.priority === 'all'}
               onClick={(e) => {
                 e.preventDefault();
-                dispatch(setFilter({ priority: 'normal' }));
+                dispatch(setFilter({ priority: 'all' }));
                 dispatch(
                   filterTasks({
-                    status: filter.status,
-                    priority: 'normal',
+                    priority: 'all',
                   }),
                 );
               }}
             >
-              Normal
+              All
             </Dropdown.Item>
             <Dropdown.Item
               active={filter.priority === 'high'}
@@ -88,7 +84,6 @@ const FilterOptions: React.FC = () => {
                 dispatch(setFilter({ priority: 'high' }));
                 dispatch(
                   filterTasks({
-                    status: filter.status,
                     priority: 'high',
                   }),
                 );
@@ -103,7 +98,6 @@ const FilterOptions: React.FC = () => {
                 dispatch(setFilter({ priority: 'low' }));
                 dispatch(
                   filterTasks({
-                    status: filter.status,
                     priority: 'low',
                   }),
                 );
