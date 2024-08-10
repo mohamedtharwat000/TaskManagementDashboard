@@ -3,7 +3,7 @@ import MainBar from './MainBar';
 import TaskList from './TaskList';
 import NotificationAlert from './Alert';
 
-const Main = () => {
+const Main: React.FC = () => {
   return (
     <div style={{ minWidth: '400px' }}>
       <NotificationAlert />
