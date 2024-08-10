@@ -6,8 +6,9 @@
     "lib": ["ESNext", "DOM"],
     "strict": true,
     "noEmit": true,
+    "jsx": "preserve",
     "moduleResolution": "bundler",
-    "jsx": "preserve"
+    "skipLibCheck": true
   },
   "include": ["src"],
   "exclude": ["node_modules"]
