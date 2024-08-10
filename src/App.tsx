@@ -1,22 +1,35 @@
-import React from 'react';
-import { Container } from 'reactstrap';
-// import TaskList from './components/TaskList';
-// import TaskForm from './components/TaskForm';
-// import FilterButtons from './components/FilterButtons';
-// import SearchBar from './components/SearchBar';
-// import SortOptions from './components/SortOptions';
+import React, { memo, lazy, Suspense } from 'react';
+import { ClipLoader } from 'react-spinners';
+import 'bootstrap/dist/css/bootstrap.min.css';
+
+const Header = lazy(() => import('./components/Header'));
+const Main = lazy(() => import('./components/Main'));
+const Footer = lazy(() => import('./components/Footer'));
 
 const App: React.FC = () => {
   return (
-    <Container>
-      <h1>Task Management Dashboard q</h1>
-      {/* <TaskForm />
-      <FilterButtons />
-      <SearchBar />
-      <SortOptions />
-      <TaskList /> */}
-    </Container>
+    <Suspense
+      fallback={
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '100vh',
+          }}
+        >
+          <ClipLoader
+            color="#000"
+            size={100}
+          />
+        </div>
+      }
+    >
+      <Header />
+      <Main />
+      <Footer />
+    </Suspense>
   );
 };
 
-export default App;
+export default memo(App);
