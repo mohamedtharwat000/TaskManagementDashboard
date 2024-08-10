@@ -10,7 +10,7 @@ const initialState: Globals = {
   },
   filter: {
     status: 'all',
-    priority: 'normal',
+    priority: 'all',
   },
 };
 
