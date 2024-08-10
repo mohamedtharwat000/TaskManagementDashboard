@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Alert } from 'react-bootstrap';
 import { setError, setSuccess } from '../store/slices/globals';
-import { useDispatch, useSelector } from 'react-redux';
-import Globals from '../types/Globals';
 import useReduxState from '../store/hooks/useReduxState';
 
 const NotificationAlert: React.FC = () => {
