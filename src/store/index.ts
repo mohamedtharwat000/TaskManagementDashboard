@@ -1,26 +1,16 @@
 import { configureStore } from '@reduxjs/toolkit';
-import taskSlice from './slice';
-import useReduxState from './hooks/useReduxState';
+
+import taskManagementReducer from './slices/taskManagement';
+import globalsReducer from './slices/globals';
 
 const store = configureStore({
   reducer: {
-    taskManagement: taskSlice.reducer,
+    taskManagement: taskManagementReducer.reducer,
+    globals: globalsReducer.reducer,
   },
 });
 
 export default store;
 
-export const {
-  addTask,
-  editTask,
-  deleteTask,
-  toggleTask,
-  searchTasks,
-  filterTasks,
-  sortTasks,
-} = taskSlice.actions;
-
-export const useState = useReduxState;
-
 export type RootState = ReturnType<typeof store.getState>;
-export type StateDispatch = typeof store.dispatch;
+export type AppDispatch = typeof store.dispatch;
