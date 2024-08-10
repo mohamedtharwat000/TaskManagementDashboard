@@ -3,7 +3,7 @@ import axios, { AxiosResponse } from 'axios';
 import { Container, Row, Col } from 'react-bootstrap';
 import TaskItem from './TaskItem';
 import useReduxState from '../store/hooks/useReduxState';
-import { setError } from '../store/slices/globals';
+import { setError, setSuccess } from '../store/slices/globals';
 import { setTasks } from '../store/slices/taskManagement';
 import Task from '../types/Task';
 
@@ -17,13 +17,26 @@ const TaskList: React.FC = () => {
       axios
         .get('https://jsonplaceholder.typicode.com/todos')
         .then((response: AxiosResponse<Task[]>) => {
-          let tasks = response.data.slice(0, 10);
-          tasks = tasks.map((task) => {
-            return new Task(task);
+          const fetchedTasks = response.data
+            .slice(0, 10)
+            .map((task) => new Task(task));
+
+          let storedTasks: Task[] = [];
+          const storedTasksString = localStorage.getItem('tasks');
+          if (storedTasksString) storedTasks = JSON.parse(storedTasksString);
+
+          const newTasks = fetchedTasks.filter((fetchedTask) => {
+            return !storedTasks.some((storedTask) => {
+              return fetchedTask.id === storedTask.id;
+            });
           });
-          const tasksString = JSON.stringify(tasks);
-          localStorage.setItem('tasks', tasksString);
-          dispatch(setTasks(tasksString));
+
+          const updatedTasks = [...storedTasks, ...newTasks];
+          const updatedTasksString = JSON.stringify(updatedTasks);
+
+          localStorage.setItem('tasks', updatedTasksString);
+          dispatch(setTasks(updatedTasksString));
+          dispatch(setSuccess('Tasks loaded successfully'));
         })
         .catch((error) => {
           dispatch(setError(error.message));
