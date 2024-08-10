@@ -27,6 +27,14 @@ This project is a feature-rich Task Management Dashboard built with React and Ty
   - Redux Toolkit for state management
   - Axios for API requests
 
+## live demo
+
+[Task Management Dashboard](https://mohamedtharwat000.github.io/TaskManagementDashboard/public/)
+
+## Screenshot
+
+![Screenshot](https://raw.githubusercontent.com/mohamedtharwat000/TaskManagementDashboard/main/screenshots/screenshot_light.png)
+
 ## Project Structure
 
 - `src/`: Contains the source code for the front-end and state management.
