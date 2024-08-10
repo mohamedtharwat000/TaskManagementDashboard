@@ -14,22 +14,6 @@ const SortOptions: React.FC = () => {
           <Dropdown.Toggle variant="secondary">Sort By</Dropdown.Toggle>
           <Dropdown.Menu>
             <Dropdown.Item
-              active={sort.by === 'noSort'}
-              onClick={(e) => {
-                e.preventDefault();
-                dispatch(
-                  setSort({
-                    by: 'noSort',
-                  }),
-                );
-                dispatch(
-                  sortTasks({ by: 'noSort', direction: sort.direction }),
-                );
-              }}
-            >
-              No Sort
-            </Dropdown.Item>
-            <Dropdown.Item
               active={sort.by === 'dueDate'}
               onClick={(e) => {
                 e.preventDefault();
