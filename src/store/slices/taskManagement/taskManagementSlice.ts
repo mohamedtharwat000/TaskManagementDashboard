@@ -1,7 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import Task from '../../../types/Task';
 import initialState from './initialState';
-import updateClientTasks from '../../utils/updateClientTasks';
 
 const fromJSON = <T>(payload: string): T => JSON.parse(payload);
 
@@ -9,85 +8,126 @@ const TaskManagementSlice = createSlice({
   name: 'TaskManagement',
   initialState,
   reducers: {
-    setTasks: (state, actions: PayloadAction<string>) => {
-      const tasks: Task[] = fromJSON<Task[]>(actions.payload);
+    setTasks: (state, action: PayloadAction<string>) => {
+      const tasks: Task[] = fromJSON<Task[]>(action.payload);
       state.allTasks = tasks;
       state.userTasks = tasks;
     },
 
-    addTask: (state, actions: PayloadAction<string>) => {
-      const taskToAdd: Task = fromJSON<Task>(actions.payload);
+    addTask: (state, action: PayloadAction<string>) => {
+      const taskToAdd: Task = fromJSON<Task>(action.payload);
       taskToAdd.dueDate = taskToAdd.dueDate
         ? new Date(taskToAdd.dueDate).getTime().toString()
         : '';
 
       state.allTasks.push(taskToAdd);
-      state.userTasks = updateClientTasks({ type: 'add', state });
+      state.userTasks.push(taskToAdd);
     },
 
-    deleteTask: (state, actions: PayloadAction<string>) => {
-      const taskToDelete: Task = fromJSON<Task>(actions.payload);
+    deleteTask: (state, action: PayloadAction<string>) => {
+      const taskToDelete: Task = fromJSON<Task>(action.payload);
       state.allTasks = state.allTasks.filter(
         (task) => task.id !== taskToDelete.id,
       );
-      state.userTasks = updateClientTasks({ type: 'delete', state });
+      state.userTasks = state.userTasks.filter(
+        (task) => task.id !== taskToDelete.id,
+      );
     },
 
-    editTask: (state, actions: PayloadAction<string>) => {
-      const dataToEdit: Task = fromJSON<Task>(actions.payload);
+    editTask: (state, action: PayloadAction<string>) => {
+      const dataToEdit: Task = fromJSON<Task>(action.payload);
       const taskToEdit = state.allTasks.find(
         (task) => task.id === dataToEdit.id,
       );
-
-      if (taskToEdit) Object.assign(taskToEdit, dataToEdit);
-      state.userTasks = updateClientTasks({ type: 'edit', state });
+      if (taskToEdit) {
+        const index = state.allTasks.indexOf(taskToEdit);
+        state.allTasks[index] = { ...taskToEdit, ...dataToEdit };
+        state.userTasks[index] = { ...taskToEdit, ...dataToEdit };
+      }
     },
 
-    toggleTask: (state, actions: PayloadAction<string>) => {
-      const taskToToggle: Task = fromJSON<Task>(actions.payload);
-      const task = state.allTasks.find((task) => task.id === taskToToggle.id);
-      if (task) task.completed = !task.completed;
-      state.userTasks = updateClientTasks({ type: 'toggle', state });
+    toggleTask: (state, action: PayloadAction<string>) => {
+      const taskToToggle: Task = fromJSON<Task>(action.payload);
+      const taskFromAll = state.allTasks.find(
+        (task) => task.id === taskToToggle.id,
+      );
+      if (taskFromAll) taskFromAll.completed = !taskFromAll.completed;
+
+      const taskFromUser = state.userTasks.find(
+        (task) => task.id === taskToToggle.id,
+      );
+      if (taskFromUser) taskFromUser.completed = !taskFromUser.completed;
     },
 
-    searchTasks: (state, actions: PayloadAction<{ search: string }>) => {
-      const search = actions.payload.search.toLocaleLowerCase();
-      state.userTasks = updateClientTasks({
-        type: 'search',
-        state,
-        payload: { search },
-      });
+    searchTasks: (state, action: PayloadAction<{ search: string }>) => {
+      const search = action.payload.search.toLowerCase();
+      state.userTasks = state.allTasks.filter(
+        (task) =>
+          task.title.toLowerCase().includes(search) ||
+          task.tags.some((tag) => tag.toLowerCase().includes(search)),
+      );
     },
 
     sortTasks: (
       state,
-      actions: PayloadAction<{
-        by: 'noSort' | 'dueDate' | 'creationDate';
+      action: PayloadAction<{
+        by: 'dueDate' | 'creationDate';
         direction: 'asc' | 'desc';
       }>,
     ) => {
-      const { by, direction } = actions.payload;
+      const { by, direction } = action.payload;
 
-      state.userTasks = updateClientTasks({
-        type: 'sort',
-        state,
-        payload: { by, direction },
+      state.userTasks = state.userTasks.sort((a, b) => {
+        const aValue = parseInt(a[by]) || 0;
+        const bValue = parseInt(b[by]) || 0;
+        return direction === 'asc' ? aValue - bValue : bValue - aValue;
       });
     },
 
     filterTasks: (
       state,
-      actions: PayloadAction<{
-        status: 'all' | 'completed' | 'incomplete';
-        priority: 'normal' | 'high' | 'low';
+      action: PayloadAction<{
+        status?: 'all' | 'completed' | 'incomplete';
+        priority?: 'all' | 'high' | 'low';
       }>,
     ) => {
-      const { status, priority } = actions.payload;
-      state.userTasks = updateClientTasks({
-        type: 'filter',
-        state,
-        payload: { status, priority },
-      });
+      const { status, priority } = action.payload;
+
+      if (status) {
+        if (status === 'all') {
+          state.userTasks = state.allTasks;
+        }
+
+        if (status === 'completed') {
+          state.userTasks = state.allTasks.filter((task) => {
+            return task.completed === true;
+          });
+        }
+
+        if (status === 'incomplete') {
+          state.userTasks = state.allTasks.filter((task) => {
+            return task.completed === false;
+          });
+        }
+      }
+
+      if (priority) {
+        if (priority === 'all') {
+          state.userTasks = state.allTasks;
+        }
+
+        if (priority === 'high') {
+          state.userTasks = state.allTasks.filter((task) => {
+            return task.priority === 'high';
+          });
+        }
+
+        if (priority === 'low') {
+          state.userTasks = state.allTasks.filter((task) => {
+            return task.priority === 'low';
+          });
+        }
+      }
     },
   },
 });
