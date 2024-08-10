@@ -3,7 +3,7 @@ import { Navbar, Container, Nav, Button } from 'react-bootstrap';
 import useReduxState from '../store/hooks/useReduxState';
 import { toggleTheme } from '../store/slices/globals';
 
-const Header = () => {
+const Header: React.FC = () => {
   const [theme, dispatch] = useReduxState((state) => state.globals.theme);
 
   return (
