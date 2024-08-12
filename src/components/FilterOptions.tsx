@@ -1,15 +1,17 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Dropdown, ButtonGroup, ButtonToolbar } from 'react-bootstrap';
 import useReduxState from '../store/hooks/useReduxState';
 import { setFilter } from '../store/slices/globals';
 import { filterTasks } from '../store/slices/taskManagement';
 
 const FilterOptions: React.FC = () => {
-  const [filter, dispatch] = useReduxState((state) => state.globals.filter);
+  const [filter, dispatchFilter] = useReduxState(
+    (state) => state.globals.filter,
+  );
 
   return (
     <ButtonToolbar className="d-flex justify-content-center align-items-center flex-nowrap">
-      <ButtonGroup className="mx-1">
+      <ButtonGroup>
         <Dropdown>
           <Dropdown.Toggle variant="secondary">Status</Dropdown.Toggle>
           <Dropdown.Menu>
@@ -17,8 +19,8 @@ const FilterOptions: React.FC = () => {
               active={filter.status === 'all'}
               onClick={(e) => {
                 e.preventDefault();
-                dispatch(setFilter({ status: 'all' }));
-                dispatch(
+                dispatchFilter(setFilter({ status: 'all' }));
+                dispatchFilter(
                   filterTasks({
                     status: 'all',
                   }),
@@ -31,8 +33,8 @@ const FilterOptions: React.FC = () => {
               active={filter.status === 'completed'}
               onClick={(e) => {
                 e.preventDefault();
-                dispatch(setFilter({ status: 'completed' }));
-                dispatch(
+                dispatchFilter(setFilter({ status: 'completed' }));
+                dispatchFilter(
                   filterTasks({
                     status: 'completed',
                   }),
@@ -45,8 +47,8 @@ const FilterOptions: React.FC = () => {
               active={filter.status === 'incomplete'}
               onClick={(e) => {
                 e.preventDefault();
-                dispatch(setFilter({ status: 'incomplete' }));
-                dispatch(
+                dispatchFilter(setFilter({ status: 'incomplete' }));
+                dispatchFilter(
                   filterTasks({
                     status: 'incomplete',
                   }),
@@ -67,8 +69,8 @@ const FilterOptions: React.FC = () => {
               active={filter.priority === 'all'}
               onClick={(e) => {
                 e.preventDefault();
-                dispatch(setFilter({ priority: 'all' }));
-                dispatch(
+                dispatchFilter(setFilter({ priority: 'all' }));
+                dispatchFilter(
                   filterTasks({
                     priority: 'all',
                   }),
@@ -81,8 +83,8 @@ const FilterOptions: React.FC = () => {
               active={filter.priority === 'high'}
               onClick={(e) => {
                 e.preventDefault();
-                dispatch(setFilter({ priority: 'high' }));
-                dispatch(
+                dispatchFilter(setFilter({ priority: 'high' }));
+                dispatchFilter(
                   filterTasks({
                     priority: 'high',
                   }),
@@ -95,8 +97,8 @@ const FilterOptions: React.FC = () => {
               active={filter.priority === 'low'}
               onClick={(e) => {
                 e.preventDefault();
-                dispatch(setFilter({ priority: 'low' }));
-                dispatch(
+                dispatchFilter(setFilter({ priority: 'low' }));
+                dispatchFilter(
                   filterTasks({
                     priority: 'low',
                   }),
@@ -112,4 +114,4 @@ const FilterOptions: React.FC = () => {
   );
 };
 
-export default FilterOptions;
+export default memo(FilterOptions);
