@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { memo, useEffect, useState } from 'react';
 import { Alert } from 'react-bootstrap';
 import { setError, setSuccess } from '../store/slices/globals';
 import useReduxState from '../store/hooks/useReduxState';
@@ -7,13 +7,14 @@ const NotificationAlert: React.FC = () => {
   const [errorMessage, dispatchError] = useReduxState(
     (state) => state.globals.error,
   );
+
   const [successMessage, dispatchSuccess] = useReduxState(
     (state) => state.globals.success,
   );
 
   const [show, setShow] = useState(false);
   const [message, setMessage] = useState('');
-  const [variant, setVariant] = useState<'danger' | 'success'>('danger');
+  const [variant, setVariant] = useState<'' | 'danger' | 'success'>('');
 
   useEffect(() => {
     if (errorMessage || successMessage) {
@@ -21,7 +22,9 @@ const NotificationAlert: React.FC = () => {
       if (errorMessage) {
         setMessage(errorMessage);
         setVariant('danger');
-      } else if (successMessage) {
+      }
+
+      if (successMessage) {
         setMessage(successMessage);
         setVariant('success');
       }
@@ -29,9 +32,9 @@ const NotificationAlert: React.FC = () => {
       const timer = setTimeout(() => {
         setShow(false);
         setMessage('');
-        if (errorMessage) dispatchError(setError(''));
-        if (successMessage) dispatchSuccess(setSuccess(''));
-      }, 5000);
+        dispatchError(setError(''));
+        dispatchSuccess(setSuccess(''));
+      }, 3000);
 
       return () => clearTimeout(timer);
     }
@@ -60,4 +63,4 @@ const NotificationAlert: React.FC = () => {
   );
 };
 
-export default NotificationAlert;
+export default memo(NotificationAlert);
