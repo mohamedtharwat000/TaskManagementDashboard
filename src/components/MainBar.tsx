@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { memo, useState } from 'react';
 import { Container, Row, Col, Button, Modal } from 'react-bootstrap';
 import SearchBar from './SearchBar';
 import FilterOptions from './FilterOptions';
@@ -66,11 +66,14 @@ const MainBar: React.FC = () => {
           <Modal.Title>Create Task</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <TaskForm toggleTaskForm={toggleTaskForm} />
+          <TaskForm
+            toggleTaskForm={toggleTaskForm}
+            formType={'new'}
+          />
         </Modal.Body>
       </Modal>
     </Container>
   );
 };
 
-export default MainBar;
+export default memo(MainBar);
