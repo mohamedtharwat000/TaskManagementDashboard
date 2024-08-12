@@ -12,7 +12,7 @@ export default class Task {
     this.id = taskProperties.id
       ? taskProperties.id
       : Math.random().toString().slice(2, 4);
-    this.creationDate = new Date().getDate().toString();
+    this.creationDate = new Date().getTime().toString();
     this.title = taskProperties.title ?? '';
     this.description = taskProperties.description ?? '';
     this.dueDate = taskProperties.dueDate ?? '';
