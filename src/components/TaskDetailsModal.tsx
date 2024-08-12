@@ -1,24 +1,24 @@
-import React from 'react';
+import React, { memo, useMemo } from 'react';
 import { Modal, Button, Row, Col, Badge } from 'react-bootstrap';
 import Task from '../types/Task';
 
-interface TaskDetailsModalProps {
+const TaskDetailsModal: React.FC<{
   show: boolean;
-  onHide: () => void;
   taskData: Task;
-}
+  onHide: () => void;
+}> = ({ show, onHide, taskData }) => {
+  const creationDateString = useMemo(
+    () => new Date(Number(taskData.creationDate)).toDateString(),
+    [taskData.creationDate],
+  );
 
-const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
-  show,
-  onHide,
-  taskData,
-}) => {
-  const dueDateString = taskData.dueDate
-    ? new Date(Number(taskData.dueDate)).toLocaleDateString()
-    : 'No Due Date';
-  const creationDateString = new Date(
-    Number(taskData.creationDate),
-  ).toLocaleDateString();
+  const dueDateString = useMemo(
+    () =>
+      taskData.dueDate
+        ? new Date(Number(taskData.dueDate)).toDateString()
+        : 'No Due Date',
+    [taskData.dueDate],
+  );
 
   return (
     <Modal
@@ -98,4 +98,4 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
   );
 };
 
-export default TaskDetailsModal;
+export default memo(TaskDetailsModal);
