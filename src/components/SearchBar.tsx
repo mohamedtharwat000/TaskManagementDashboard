@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { FormControl } from 'react-bootstrap';
 import { useDispatch } from 'react-redux';
 import { searchTasks } from '../store/slices/taskManagement';
@@ -18,4 +18,4 @@ const SearchBar: React.FC = () => {
   );
 };
 
-export default SearchBar;
+export default memo(SearchBar);
