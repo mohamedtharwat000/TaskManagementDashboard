@@ -25,9 +25,11 @@ const App: React.FC = () => {
         </div>
       }
     >
-      <Header />
-      <Main />
-      <Footer />
+      <div style={{ minWidth: '400px' }}>
+        <Header />
+        <Main />
+        <Footer />
+      </div>
     </Suspense>
   );
 };
