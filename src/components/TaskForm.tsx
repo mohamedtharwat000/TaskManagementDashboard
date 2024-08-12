@@ -1,34 +1,31 @@
-import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import React, { memo, useState, useCallback } from 'react';
+import useReduxState from '../store/hooks/useReduxState';
 import axios from 'axios';
 import { Container, Row, Form, Button, Col } from 'react-bootstrap';
 import Task from '../types/Task';
 import { addTask, editTask } from '../store/slices/taskManagement';
 import { setError, setSuccess } from '../store/slices/globals';
 
-interface TaskFormProps {
+const TaskForm: React.FC<{
   toggleTaskForm: () => void;
+  formType: 'new' | 'edit';
   task?: Task;
-}
-
-const TaskForm: React.FC<TaskFormProps> = ({ toggleTaskForm, task }) => {
-  const dispatch = useDispatch();
-  const [taskData, setTaskData] = useState(
-    task
-      ? { ...task }
-      : {
-          ...new Task({}),
-          id: '',
-        },
+}> = ({ toggleTaskForm, formType, task }) => {
+  const [allTasks, dispatch] = useReduxState(
+    (state) => state.taskManagement.allTasks,
   );
+  const [taskData, setTaskData] = useState(task ? task : new Task({}));
 
   const [tagInput, setTagInput] = useState('');
 
-  const handleTagChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    setTagInput(e.target.value);
-  };
+  const handleTagChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>): void => {
+      setTagInput(e.target.value);
+    },
+    [],
+  );
 
-  const handleAddTag = () => {
+  const handleAddTag = useCallback(() => {
     if (tagInput && !taskData.tags.includes(tagInput)) {
       setTaskData((prevData) => ({
         ...prevData,
@@ -36,73 +33,76 @@ const TaskForm: React.FC<TaskFormProps> = ({ toggleTaskForm, task }) => {
       }));
       setTagInput('');
     }
-  };
+  }, [tagInput, taskData.tags]);
 
-  const handleRemoveTag = (tagToRemove: string) => {
+  const handleRemoveTag = useCallback((tagToRemove: string) => {
     setTaskData((prevData) => ({
       ...prevData,
       tags: prevData.tags.filter((tag) => tag !== tagToRemove),
     }));
-  };
+  }, []);
 
-  const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >,
-  ): void => {
-    const { name, value } = e.target;
-    setTaskData((prevData) => ({ ...prevData, [name]: value }));
-  };
+  const handleChange = useCallback(
+    (
+      e: React.ChangeEvent<
+        HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+      >,
+    ): void => {
+      const { name, value } = e.target;
+      setTaskData((prevData) => ({ ...prevData, [name]: value }));
+    },
+    [],
+  );
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
-    e.preventDefault();
+  const handleSubmit = useCallback(
+    (e: React.FormEvent<HTMLFormElement>): void => {
+      e.preventDefault();
 
-    if (taskData.id) {
-      taskData.dueDate = new Date(taskData.dueDate).getTime().toString();
-      dispatch(editTask(JSON.stringify(taskData)));
-      axios
-        .put(
-          `https://jsonplaceholder.typicode.com/todos/${taskData.id}`,
-          taskData,
-        )
-        .then(() => {
-          dispatch(setSuccess('Task updated successfully'));
-          const localTasks: Task[] = JSON.parse(
-            localStorage.getItem('tasks') as string,
-          );
-          const updatedTasks = localTasks.map((task: Task) => {
-            if (task.id === taskData.id) {
-              return taskData;
-            }
-            return task;
+      const correctDueDate = new Date(taskData.dueDate).getTime().toString();
+      const correctedTaskData = { ...taskData, dueDate: correctDueDate };
+
+      if (formType === 'new') {
+        if (
+          !allTasks.some((task: Task) => task.title === correctedTaskData.title)
+        ) {
+          dispatch(addTask(JSON.stringify(correctedTaskData)));
+          dispatch(setSuccess('Task created locally successfully'));
+          axios
+            .post(
+              'https://jsonplaceholder.typicode.com/todos',
+              correctedTaskData,
+            )
+            .then(() => {
+              dispatch(setSuccess('Sync successful'));
+            })
+            .catch((error) => {
+              dispatch(setError(error.message));
+            });
+        } else {
+          dispatch(setError('Task with the same title already exists'));
+        }
+      }
+
+      if (formType === 'edit') {
+        dispatch(editTask(JSON.stringify(correctedTaskData)));
+        dispatch(setSuccess('Task updated successfully'));
+        axios
+          .put(
+            `https://jsonplaceholder.typicode.com/todos/${correctedTaskData.id}`,
+            correctedTaskData,
+          )
+          .then(() => {
+            dispatch(setSuccess('Sync successful'));
+          })
+          .catch((error) => {
+            dispatch(setError(error.message));
           });
-          localStorage.setItem('tasks', JSON.stringify(updatedTasks));
-        })
-        .catch((error) => {
-          dispatch(setError(error.message));
-        });
-    } else {
-      const newTask: Task = new Task({ ...taskData });
-      dispatch(addTask(JSON.stringify(newTask)));
-      axios
-        .post('https://jsonplaceholder.typicode.com/todos', newTask)
-        .then(() => {
-          dispatch(setSuccess('Task created successfully'));
-          const localTasks: Task[] = JSON.parse(
-            localStorage.getItem('tasks') as string,
-          );
-          localStorage.setItem(
-            'tasks',
-            JSON.stringify([...localTasks, newTask]),
-          );
-        })
-        .catch((error) => {
-          dispatch(setError(error.message));
-        });
-    }
+      }
 
-    toggleTaskForm();
-  };
+      toggleTaskForm();
+    },
+    [formType, toggleTaskForm, allTasks, dispatch, taskData],
+  );
 
   return (
     <Form onSubmit={handleSubmit}>
@@ -191,7 +191,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ toggleTaskForm, task }) => {
             variant="success"
             type="submit"
           >
-            {taskData.id ? 'Update Task' : 'Create Task'}
+            {formType === 'edit' ? 'Update Task' : 'Create Task'}
           </Button>
           <Button
             variant="danger"
@@ -206,4 +206,4 @@ const TaskForm: React.FC<TaskFormProps> = ({ toggleTaskForm, task }) => {
   );
 };
 
-export default TaskForm;
+export default memo(TaskForm);
