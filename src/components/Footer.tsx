@@ -1,16 +1,15 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Container, Row, Col } from 'react-bootstrap';
 
 const Footer: React.FC = () => {
-  const currentYear = new Date().getFullYear();
-
   return (
     <footer className="py-4 shadow-lg m-0">
       <Container>
         <Row className="text-center">
           <Col>
             <p className="mb-0">
-              © {currentYear} Mohamed Tharwat. All rights reserved.
+              © {new Date().getFullYear()} Mohamed Tharwat. All rights
+              reserved.
             </p>
             <p className="mt-2">
               <a
@@ -27,4 +26,4 @@ const Footer: React.FC = () => {
   );
 };
 
-export default Footer;
+export default memo(Footer);
