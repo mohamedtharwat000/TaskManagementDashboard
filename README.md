@@ -33,7 +33,7 @@ This project is a feature-rich Task Management Dashboard built with React and Ty
 
 ## Screenshot
 
-![Screenshot](https://raw.githubusercontent.com/mohamedtharwat000/TaskManagementDashboard/main/screenshots/screenshot_light.png)
+![Screenshot](https://raw.githubusercontent.com/mohamedtharwat000/TaskManagementDashboard/main/public/screenshot.png)
 
 ## Project Structure
 
