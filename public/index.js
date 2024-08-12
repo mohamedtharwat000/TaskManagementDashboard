@@ -44311,27 +44311,15 @@ Take a look at the reducer(s) handling this action type: ${action.type}.
         const ref = import_react92.default.useRef(null);
         const [, drag] = useDrag({
           type: "TASK",
-          collect: (monitor2) => monitor2,
+          collect: (monitor) => monitor,
           item: () => ({ index })
         });
-        const [monitor, drop] = useDrop({
+        const [, drop] = useDrop({
           accept: "TASK",
-          collect: (monitor2) => monitor2,
-          hover(item, monitor2) {
+          collect: (monitor) => monitor,
+          hover(item) {
             const dragIndex = item.index;
             const hoverIndex = index;
-            if (ref.current) {
-              if (dragIndex !== hoverIndex) {
-                const hoverBoundingRect = ref.current.getBoundingClientRect();
-                const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
-                const clientOffset = monitor2.getClientOffset();
-                const hoverClientY = clientOffset.y - hoverBoundingRect.top;
-                if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY || dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
-                  moveTask(dragIndex, hoverIndex);
-                  item.index = hoverIndex;
-                }
-              }
-            }
             moveTask(dragIndex, hoverIndex);
             item.index = hoverIndex;
           }
@@ -44359,7 +44347,6 @@ Take a look at the reducer(s) handling this action type: ${action.type}.
           {
             ref,
             style: { width: "350px" },
-            "data-handler-id": monitor.handlerId,
             className: "shadow-lg rounded-4 flex-shrink-0 btn",
             onClick: toggleTaskDetails
           },
