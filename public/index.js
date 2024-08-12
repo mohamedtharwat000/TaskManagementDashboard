@@ -44309,44 +44309,32 @@ Take a look at the reducer(s) handling this action type: ${action.type}.
       TaskItem = ({ taskData, index, moveTask }) => {
         const dispatch = useDispatch();
         const ref = import_react92.default.useRef(null);
-        const [{ handlerId }, drop] = useDrop({
+        const [, drag] = useDrag({
+          type: "TASK",
+          collect: (monitor2) => monitor2,
+          item: () => ({ index })
+        });
+        const [monitor, drop] = useDrop({
           accept: "TASK",
-          collect(monitor) {
-            return {
-              handlerId: monitor.getHandlerId()
-            };
-          },
-          hover(item, monitor) {
-            if (!ref.current) {
-              return;
-            }
+          collect: (monitor2) => monitor2,
+          hover(item, monitor2) {
             const dragIndex = item.index;
             const hoverIndex = index;
-            if (dragIndex === hoverIndex) {
-              return;
-            }
-            const hoverBoundingRect = ref.current?.getBoundingClientRect();
-            const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
-            const clientOffset = monitor.getClientOffset();
-            const hoverClientY = clientOffset.y - hoverBoundingRect.top;
-            if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
-              return;
-            }
-            if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
-              return;
+            if (ref.current) {
+              if (dragIndex !== hoverIndex) {
+                const hoverBoundingRect = ref.current.getBoundingClientRect();
+                const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
+                const clientOffset = monitor2.getClientOffset();
+                const hoverClientY = clientOffset.y - hoverBoundingRect.top;
+                if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY || dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
+                  moveTask(dragIndex, hoverIndex);
+                  item.index = hoverIndex;
+                }
+              }
             }
             moveTask(dragIndex, hoverIndex);
             item.index = hoverIndex;
           }
-        });
-        const [{ isDragging }, drag] = useDrag({
-          type: "TASK",
-          item: () => {
-            return { index };
-          },
-          collect: (monitor) => ({
-            isDragging: monitor.isDragging()
-          })
         });
         drag(drop(ref));
         const [taskFormShow, setTaskFormShow] = (0, import_react92.useState)(false);
@@ -44371,7 +44359,7 @@ Take a look at the reducer(s) handling this action type: ${action.type}.
           {
             ref,
             style: { width: "350px" },
-            "data-handler-id": handlerId,
+            "data-handler-id": monitor.handlerId,
             className: "shadow-lg rounded-4 flex-shrink-0 btn",
             onClick: toggleTaskDetails
           },
