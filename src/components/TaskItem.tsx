@@ -18,51 +18,40 @@ const TaskItem: React.FC<{
 
   const ref = React.useRef<HTMLDivElement>(null);
 
-  const [{ handlerId }, drop] = useDrop<{ index: number }>({
+  const [, drag] = useDrag({
+    type: 'TASK',
+    collect: (monitor) => monitor,
+    item: () => ({ index }),
+  });
+
+  const [monitor, drop] = useDrop<{ index: number }>({
     accept: 'TASK',
-    collect(monitor) {
-      return {
-        handlerId: monitor.getHandlerId(),
-      };
-    },
+    collect: (monitor) => monitor,
     hover(item: { index: number }, monitor) {
-      if (!ref.current) {
-        return;
-      }
       const dragIndex = item.index;
       const hoverIndex = index;
 
-      if (dragIndex === hoverIndex) {
-        return;
-      }
+      if (ref.current) {
+        if (dragIndex !== hoverIndex) {
+          const hoverBoundingRect = ref.current.getBoundingClientRect();
+          const hoverMiddleY =
+            (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
+          const clientOffset = monitor.getClientOffset();
+          const hoverClientY = clientOffset!.y - hoverBoundingRect.top;
 
-      const hoverBoundingRect = ref.current?.getBoundingClientRect();
-      const hoverMiddleY =
-        (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
-      const clientOffset = monitor.getClientOffset();
-      const hoverClientY = clientOffset!.y - hoverBoundingRect.top;
-
-      if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
-        return;
-      }
-
-      if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
-        return;
+          if (
+            (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) ||
+            (dragIndex > hoverIndex && hoverClientY > hoverMiddleY)
+          ) {
+            moveTask(dragIndex, hoverIndex);
+            item.index = hoverIndex;
+          }
+        }
       }
 
       moveTask(dragIndex, hoverIndex);
       item.index = hoverIndex;
     },
-  });
-
-  const [{ isDragging }, drag] = useDrag({
-    type: 'TASK',
-    item: () => {
-      return { index };
-    },
-    collect: (monitor) => ({
-      isDragging: monitor.isDragging(),
-    }),
   });
 
   drag(drop(ref));
@@ -99,7 +88,7 @@ const TaskItem: React.FC<{
       <Card
         ref={ref}
         style={{ width: '350px' }}
-        data-handler-id={handlerId}
+        data-handler-id={monitor.handlerId}
         className="shadow-lg rounded-4 flex-shrink-0 btn"
         onClick={toggleTaskDetails}
       >
