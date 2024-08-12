@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Navbar, Container, Nav, Button } from 'react-bootstrap';
 import useReduxState from '../store/hooks/useReduxState';
 import { toggleTheme } from '../store/slices/globals';
 
 const Header: React.FC = () => {
-  const [theme, dispatch] = useReduxState((state) => state.globals.theme);
+  const [theme, dispatchTheme] = useReduxState((state) => state.globals.theme);
 
   return (
     <Navbar className="shadow-lg">
@@ -15,10 +15,10 @@ const Header: React.FC = () => {
             className="border"
             variant={theme === 'light' ? 'dark' : 'light'}
             onClick={() => {
-              dispatch(toggleTheme());
+              dispatchTheme(toggleTheme());
             }}
           >
-            {(theme === 'light' ? 'dark' : 'light') + ' mode'}
+            {theme + ' mode'}
           </Button>
         </Nav>
       </Container>
@@ -26,4 +26,4 @@ const Header: React.FC = () => {
   );
 };
 
-export default Header;
+export default memo(Header);
