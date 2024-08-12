@@ -3,6 +3,18 @@ import Task from '../../../types/Task';
 import initialState from './initialState';
 
 const fromJSON = <T>(payload: string): T => JSON.parse(payload);
+const saveToLocalStorage = (tasks: Task[]): void => {
+  const localTasks = localStorage.getItem('tasks');
+  if (localTasks) {
+    const parsedLocalTasks = fromJSON<Task[]>(localTasks);
+    localStorage.setItem(
+      'tasks',
+      JSON.stringify({ ...parsedLocalTasks, ...tasks }),
+    );
+  } else {
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+  }
+};
 
 const TaskManagementSlice = createSlice({
   name: 'TaskManagement',
@@ -12,16 +24,21 @@ const TaskManagementSlice = createSlice({
       const tasks: Task[] = fromJSON<Task[]>(action.payload);
       state.allTasks = tasks;
       state.userTasks = tasks;
+
+      saveToLocalStorage(state.allTasks);
     },
 
     addTask: (state, action: PayloadAction<string>) => {
       const taskToAdd: Task = fromJSON<Task>(action.payload);
-      taskToAdd.dueDate = taskToAdd.dueDate
-        ? new Date(taskToAdd.dueDate).getTime().toString()
-        : '';
+      if (!state.allTasks.includes(taskToAdd)) {
+        state.allTasks.unshift(taskToAdd);
+      }
 
-      state.allTasks.push(taskToAdd);
-      state.userTasks.push(taskToAdd);
+      if (!state.userTasks.includes(taskToAdd)) {
+        state.userTasks.unshift(taskToAdd);
+      }
+
+      saveToLocalStorage(state.allTasks);
     },
 
     deleteTask: (state, action: PayloadAction<string>) => {
@@ -32,6 +49,8 @@ const TaskManagementSlice = createSlice({
       state.userTasks = state.userTasks.filter(
         (task) => task.id !== taskToDelete.id,
       );
+
+      saveToLocalStorage(state.allTasks);
     },
 
     editTask: (state, action: PayloadAction<string>) => {
@@ -44,6 +63,8 @@ const TaskManagementSlice = createSlice({
         state.allTasks[index] = { ...taskToEdit, ...dataToEdit };
         state.userTasks[index] = { ...taskToEdit, ...dataToEdit };
       }
+
+      saveToLocalStorage(state.allTasks);
     },
 
     toggleTask: (state, action: PayloadAction<string>) => {
@@ -52,11 +73,12 @@ const TaskManagementSlice = createSlice({
         (task) => task.id === taskToToggle.id,
       );
       if (taskFromAll) taskFromAll.completed = !taskFromAll.completed;
-
       const taskFromUser = state.userTasks.find(
         (task) => task.id === taskToToggle.id,
       );
       if (taskFromUser) taskFromUser.completed = !taskFromUser.completed;
+
+      saveToLocalStorage(state.allTasks);
     },
 
     searchTasks: (state, action: PayloadAction<{ search: string }>) => {
@@ -93,41 +115,37 @@ const TaskManagementSlice = createSlice({
     ) => {
       const { status, priority } = action.payload;
 
-      if (status) {
-        if (status === 'all') {
-          state.userTasks = state.allTasks;
-        }
+      let filteredTasks = state.allTasks;
 
+      if (status) {
         if (status === 'completed') {
-          state.userTasks = state.allTasks.filter((task) => {
+          filteredTasks = filteredTasks.filter((task) => {
             return task.completed === true;
           });
         }
 
         if (status === 'incomplete') {
-          state.userTasks = state.allTasks.filter((task) => {
+          filteredTasks = filteredTasks.filter((task) => {
             return task.completed === false;
           });
         }
       }
 
       if (priority) {
-        if (priority === 'all') {
-          state.userTasks = state.allTasks;
-        }
-
         if (priority === 'high') {
-          state.userTasks = state.allTasks.filter((task) => {
+          filteredTasks = filteredTasks.filter((task) => {
             return task.priority === 'high';
           });
         }
 
         if (priority === 'low') {
-          state.userTasks = state.allTasks.filter((task) => {
+          filteredTasks = filteredTasks.filter((task) => {
             return task.priority === 'low';
           });
         }
       }
+
+      state.userTasks = filteredTasks;
     },
   },
 });
