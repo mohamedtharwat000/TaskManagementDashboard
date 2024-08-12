@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Dropdown, ButtonGroup, ButtonToolbar } from 'react-bootstrap';
 import useReduxState from '../store/hooks/useReduxState';
 import { setSort } from '../store/slices/globals';
 import { sortTasks } from '../store/slices/taskManagement';
 
 const SortOptions: React.FC = () => {
-  const [sort, dispatch] = useReduxState((state) => state.globals.sort);
+  const [sort, dispatchSort] = useReduxState((state) => state.globals.sort);
 
   return (
     <ButtonToolbar>
@@ -14,15 +14,28 @@ const SortOptions: React.FC = () => {
           <Dropdown.Toggle variant="secondary">Sort By</Dropdown.Toggle>
           <Dropdown.Menu>
             <Dropdown.Item
+              active={sort.by === 'noSort'}
+              onClick={(e) => {
+                e.preventDefault();
+                dispatchSort(
+                  setSort({
+                    by: 'noSort',
+                  }),
+                );
+              }}
+            >
+              No Sort
+            </Dropdown.Item>
+            <Dropdown.Item
               active={sort.by === 'dueDate'}
               onClick={(e) => {
                 e.preventDefault();
-                dispatch(
+                dispatchSort(
                   setSort({
                     by: 'dueDate',
                   }),
                 );
-                dispatch(
+                dispatchSort(
                   sortTasks({
                     by: 'dueDate',
                     direction: sort.direction,
@@ -36,12 +49,12 @@ const SortOptions: React.FC = () => {
               active={sort.by === 'creationDate'}
               onClick={(e) => {
                 e.preventDefault();
-                dispatch(
+                dispatchSort(
                   setSort({
                     by: 'creationDate',
                   }),
                 );
-                dispatch(
+                dispatchSort(
                   sortTasks({
                     by: 'creationDate',
                     direction: sort.direction,
@@ -56,13 +69,12 @@ const SortOptions: React.FC = () => {
               active={sort.direction === 'asc'}
               onClick={(e) => {
                 e.preventDefault();
-
-                dispatch(
+                dispatchSort(
                   setSort({
                     direction: 'asc',
                   }),
                 );
-                dispatch(
+                dispatchSort(
                   sortTasks({
                     by: sort.by,
                     direction: 'asc',
@@ -77,12 +89,12 @@ const SortOptions: React.FC = () => {
               onClick={(e) => {
                 e.preventDefault();
 
-                dispatch(
+                dispatchSort(
                   setSort({
                     direction: 'desc',
                   }),
                 );
-                dispatch(
+                dispatchSort(
                   sortTasks({
                     by: sort.by,
                     direction: 'desc',
@@ -99,4 +111,4 @@ const SortOptions: React.FC = () => {
   );
 };
 
-export default SortOptions;
+export default memo(SortOptions);
