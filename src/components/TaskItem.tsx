@@ -1,13 +1,6 @@
-import React, { useState } from 'react';
-import {
-  Card,
-  Button,
-  Form,
-  Badge,
-  Container,
-  Row,
-  Modal,
-} from 'react-bootstrap';
+import React, { memo, useMemo, useCallback, useState } from 'react';
+import { useDrag, useDrop } from 'react-dnd';
+import { Card, Button, Form, Container, Modal } from 'react-bootstrap';
 import { useDispatch } from 'react-redux';
 import { deleteTask, toggleTask } from '../store/slices/taskManagement';
 import Task from '../types/Task';
@@ -16,8 +9,63 @@ import TaskDetailsModal from './TaskDetailsModal';
 import axios from 'axios';
 import { setError, setSuccess } from '../store/slices/globals';
 
-const TaskItem: React.FC<{ taskData: Task }> = ({ taskData }) => {
+const TaskItem: React.FC<{
+  taskData: Task;
+  index: number;
+  moveTask: (dragIndex: number, hoverIndex: number) => void;
+}> = ({ taskData, index, moveTask }) => {
   const dispatch = useDispatch();
+
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  const [{ handlerId }, drop] = useDrop<{ index: number }>({
+    accept: 'TASK',
+    collect(monitor) {
+      return {
+        handlerId: monitor.getHandlerId(),
+      };
+    },
+    hover(item: { index: number }, monitor) {
+      if (!ref.current) {
+        return;
+      }
+      const dragIndex = item.index;
+      const hoverIndex = index;
+
+      if (dragIndex === hoverIndex) {
+        return;
+      }
+
+      const hoverBoundingRect = ref.current?.getBoundingClientRect();
+      const hoverMiddleY =
+        (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
+      const clientOffset = monitor.getClientOffset();
+      const hoverClientY = clientOffset!.y - hoverBoundingRect.top;
+
+      if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
+        return;
+      }
+
+      if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
+        return;
+      }
+
+      moveTask(dragIndex, hoverIndex);
+      item.index = hoverIndex;
+    },
+  });
+
+  const [{ isDragging }, drag] = useDrag({
+    type: 'TASK',
+    item: () => {
+      return { index };
+    },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+  });
+
+  drag(drop(ref));
 
   const [taskFormShow, setTaskFormShow] = useState(false);
   const toggleTaskForm = () => setTaskFormShow(!taskFormShow);
@@ -25,37 +73,35 @@ const TaskItem: React.FC<{ taskData: Task }> = ({ taskData }) => {
   const [taskDetailsShow, setTaskDetailsShow] = useState(false);
   const toggleTaskDetails = () => setTaskDetailsShow(!taskDetailsShow);
 
-  const dueDateString = taskData.dueDate
-    ? new Date(Number(taskData.dueDate)).toDateString()
-    : 'No Due Date';
-  const creationDateString = new Date(
-    Number(taskData.creationDate),
-  ).toDateString();
+  const dueDateString = useMemo(
+    () =>
+      taskData.dueDate
+        ? new Date(Number(taskData.dueDate)).toLocaleDateString()
+        : 'No Due Date',
+    [taskData.dueDate],
+  );
 
-  const handleDeleteTask = () => {
+  const handleDeleteTask = useCallback(() => {
     dispatch(deleteTask(JSON.stringify(taskData)));
+    dispatch(setSuccess('Task deleted successfully'));
     axios
       .delete(`https://jsonplaceholder.typicode.com/todos/${taskData.id}`)
       .then(() => {
-        dispatch(setSuccess('Task deleted successfully'));
+        dispatch(setSuccess('Sync successful'));
       })
       .catch((err) => {
         dispatch(setError(err.message));
       });
-    const localTasks: Task[] = JSON.parse(
-      localStorage.getItem('tasks') as string,
-    );
-    const updatedTasks = localTasks.filter(
-      (task: Task) => task.id !== taskData.id,
-    );
-    localStorage.setItem('tasks', JSON.stringify(updatedTasks));
-  };
+  }, [dispatch, taskData]);
 
   return (
     <>
       <Card
-        className="shadow-lg rounded-4 flex-shrink-0"
-        style={{ width: '400px' }}
+        ref={ref}
+        style={{ width: '350px' }}
+        data-handler-id={handlerId}
+        className="shadow-lg rounded-4 flex-shrink-0 btn"
+        onClick={toggleTaskDetails}
       >
         <Card.Body>
           <Card.Title
@@ -64,94 +110,67 @@ const TaskItem: React.FC<{ taskData: Task }> = ({ taskData }) => {
           >
             {taskData.title}
           </Card.Title>
+          <Card.Text>Due Date: {dueDateString}</Card.Text>
+          <Container className="d-flex justify-content-between align-items-center">
+            <Container
+              className="d-flex flex-column justify-content-center align-items-center p-0"
+              style={{ width: '50%' }}
+            >
+              <Form.Check
+                type="switch"
+                id={'completed'}
+                checked={taskData.completed}
+                onClick={(event) => event.stopPropagation()}
+                onChange={() => dispatch(toggleTask(JSON.stringify(taskData)))}
+              />
+              <Form.Label htmlFor={'completed'}>Completed</Form.Label>
+            </Container>
 
-          <Container className="d-flex flex-column justify-content-start align-items-start fs-6 my-2">
-            <div className="text-muted">Due Date: {dueDateString}</div>
-            <div className="text-muted">Created Date: {creationDateString}</div>
-          </Container>
-
-          <Container>
-            <Row className="flex-nowrap overflow-auto">
-              <Badge
-                className="bg-dark"
-                style={{ maxWidth: 'fit-content', margin: '2px' }}
-              >
-                {taskData.priority}
-              </Badge>
-              {taskData.tags.map((tag, index) => (
-                <Badge
-                  key={index}
-                  className="bg-dark"
-                  style={{ maxWidth: 'fit-content', margin: '2px' }}
-                >
-                  {tag}
-                </Badge>
-              ))}
-            </Row>
-          </Container>
-
-          <Container className="d-flex justify-content-between align-items-center my-3">
-            <Form.Check
-              type="switch"
-              label="checked"
-              checked={taskData.completed}
-              onChange={() => {
-                dispatch(toggleTask(JSON.stringify(taskData)));
-              }}
-            />
-            <Container className="d-flex justify-content-center align-items-center text-center">
+            <Container className="d-flex justify-content-evenly align-items-center p-0">
               <Button
-                variant="info"
-                className="me-2"
-                onClick={() => toggleTaskDetails()}
-              >
-                Details
-              </Button>
-              <Button
-                variant="success"
-                className="me-2"
-                onClick={() => toggleTaskForm()}
-              >
-                Edit
-              </Button>
-              <Button
-                variant="danger"
-                onClick={() => {
+                variant="outline-danger"
+                onClick={(event) => {
+                  event.stopPropagation();
                   handleDeleteTask();
                 }}
               >
                 Delete
               </Button>
+              <Button
+                variant="outline-primary"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  toggleTaskForm();
+                }}
+              >
+                Edit
+              </Button>
             </Container>
           </Container>
         </Card.Body>
       </Card>
-
-      <TaskDetailsModal
-        show={taskDetailsShow}
-        onHide={toggleTaskDetails}
-        taskData={taskData}
-      />
-
       <Modal
         show={taskFormShow}
-        onHide={() => {
-          toggleTaskForm();
-        }}
-        centered
+        onHide={toggleTaskForm}
       >
         <Modal.Header closeButton>
           <Modal.Title>Edit Task</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <TaskForm
-            toggleTaskForm={toggleTaskForm}
             task={taskData}
+            formType="edit"
+            toggleTaskForm={toggleTaskForm}
           />
         </Modal.Body>
       </Modal>
+      <TaskDetailsModal
+        taskData={taskData}
+        show={taskDetailsShow}
+        onHide={toggleTaskDetails}
+      />
     </>
   );
 };
 
-export default TaskItem;
+export default memo(TaskItem);
