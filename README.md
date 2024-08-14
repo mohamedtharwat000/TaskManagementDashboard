@@ -15,6 +15,7 @@ This project is a feature-rich Task Management Dashboard built with React and Ty
 - **Task Filtering:** Filter tasks by status (completed, incomplete) and priority.
 - **Task Sorting:** Sort tasks by title, deadline, priority, or completion status.
 - **Task Search:** Search for tasks by title or description using a search bar.
+- **Drag-and-Drop:** Reorder tasks using a drag-and-drop interface.
 - **Online Support:** Connects to a RESTful API to fetch and update task data.
 - **Offline Support:** Uses `localforage` to store data locally for offline access.
 - **Responsive Design:** Fully responsive and optimized for mobile devices.
@@ -26,6 +27,15 @@ This project is a feature-rich Task Management Dashboard built with React and Ty
   - React-Bootstrap
   - Redux Toolkit for state management
   - Axios for API requests
+
+- **dev environment**
+  - esbuild for bundling and dev server
+  - eslint for linting
+  - prettier for code formatting
+  - typescript for type checking
+  - serve for serving the build files
+  - opener for opening the browser
+
 
 ## live demo
 
@@ -55,6 +65,7 @@ This project is a feature-rich Task Management Dashboard built with React and Ty
 │   └── index.html
 │       └── index.js
 ├── package.json
+|── build.js
 └── ...
 ```
 
@@ -63,7 +74,7 @@ This project is a feature-rich Task Management Dashboard built with React and Ty
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/yourusername/taskManagement.git
+   git clone https://github.com/mohamedtharwat000/TaskManagementDashboard.git
    cd taskManagement
    ```
 
